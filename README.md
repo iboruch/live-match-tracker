@@ -169,21 +169,21 @@ The web service uses `API_INTERNAL_URL=http://api:4000` for server-side requests
 
 ## Screenshots
 
-Add screenshots under `docs/screenshots/` after running the app:
+### Public Match List
 
-```text
-docs/screenshots/matches.png
-docs/screenshots/admin.png
-docs/screenshots/match-detail.png
-docs/screenshots/widget.png
-```
+![Public match list](docs/screenshots/matches.png)
 
-Recommended screenshots for a portfolio README:
+### Admin Dashboard
 
-- Public match list with live and finished matches
-- Admin dashboard managing an active match
-- Match detail page after several timeline events
-- Compact widget view for an active match
+![Admin dashboard](docs/screenshots/admin.png)
+
+### Match Detail
+
+![Match detail page](docs/screenshots/match-detail.png)
+
+### Embeddable Widget
+
+![Embeddable live score widget](docs/screenshots/widget.png)
 
 ## Roadmap
 

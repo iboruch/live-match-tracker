@@ -15,6 +15,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return res.status(err.statusCode).json({ message: err.message, details: err.details });
   }
 
+  if (err?.name === "ValidationError") {
+    return res.status(400).json({ message: err.message });
+  }
+
   if (err?.name === "CastError" || (err?.value && !isValidObjectId(err.value))) {
     return res.status(400).json({ message: "Invalid resource id" });
   }

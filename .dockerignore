@@ -1,0 +1,9 @@
+node_modules
+apps/*/node_modules
+apps/*/.next
+apps/api/dist
+.git
+.env
+coverage
+*.tsbuildinfo
+npm-debug.log*

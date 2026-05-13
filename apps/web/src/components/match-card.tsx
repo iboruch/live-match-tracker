@@ -16,12 +16,12 @@ export function MatchCard({ match }: { match: Match }) {
           {match.minute}&apos;
         </span>
       </div>
-      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="min-w-0 text-right font-semibold text-slate-900">{match.homeTeam}</div>
-        <div className="rounded bg-slate-950 px-3 py-2 text-lg font-bold tabular-nums text-white">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+        <div className="min-w-0 truncate text-right font-semibold text-slate-900">{match.homeTeam}</div>
+        <div className="rounded bg-slate-950 px-3 py-2 text-lg font-bold tabular-nums text-white shadow-sm">
           {match.homeScore} - {match.awayScore}
         </div>
-        <div className="min-w-0 font-semibold text-slate-900">{match.awayTeam}</div>
+        <div className="min-w-0 truncate font-semibold text-slate-900">{match.awayTeam}</div>
       </div>
     </Link>
   );

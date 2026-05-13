@@ -38,7 +38,12 @@ export function MatchesLiveList({ initialMatches }: { initialMatches: Match[] })
   }, []);
 
   if (sortedMatches.length === 0) {
-    return <EmptyState title="No matches found" body="Create the first match from the admin dashboard." />;
+    return (
+      <EmptyState
+        title="No fixtures available"
+        body="Seed demo data or create the first fixture from the admin dashboard to start the live feed."
+      />
+    );
   }
 
   return (

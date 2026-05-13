@@ -131,6 +131,12 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ```
 
+Seed demo data:
+
+```bash
+npm run seed
+```
+
 ## Docker Setup
 
 Docker Compose starts the full local stack:
@@ -139,13 +145,13 @@ Docker Compose starts the full local stack:
 docker compose up --build
 ```
 
-Services:
+### Docker Services
 
-| Service | URL |
-| --- | --- |
-| Web | `http://localhost:3000` |
-| API | `http://localhost:4000` |
-| MongoDB | `mongodb://localhost:27017/live-match-tracker` |
+| Service | Purpose | Local URL |
+| --- | --- | --- |
+| `web` | Next.js frontend | `http://localhost:3000` |
+| `api` | Express REST API and Socket.IO server | `http://localhost:4000` |
+| `mongodb` | MongoDB persistence | `mongodb://localhost:27017/live-match-tracker` |
 
 Stop the stack:
 
@@ -154,6 +160,12 @@ docker compose down
 ```
 
 The web service uses `API_INTERNAL_URL=http://api:4000` for server-side requests inside Docker, while browser requests use `NEXT_PUBLIC_API_URL=http://localhost:4000`.
+
+Seed the Docker database after the stack is running:
+
+```bash
+docker compose exec api npm run seed
+```
 
 ## Environment Variables
 
@@ -167,34 +179,59 @@ The web service uses `API_INTERNAL_URL=http://api:4000` for server-side requests
 | `NEXT_PUBLIC_API_URL` | Browser API URL | `http://localhost:4000` |
 | `NEXT_PUBLIC_SOCKET_URL` | Browser Socket.IO URL | `http://localhost:4000` |
 
+## Demo Flow
+
+1. Start the app with Docker Compose: `docker compose up --build`
+2. Seed demo data: `docker compose exec api npm run seed`
+3. Open the public match list at `http://localhost:3000`
+4. Open the admin dashboard at `http://localhost:3000/admin`
+5. Start a scheduled match or update the minute on the live match
+6. Add a goal, card, substitution, VAR event, or comment
+7. Open the public match page or `/widget/[matchId]`
+8. Watch the score and timeline update through Socket.IO without refreshing
+
 ## Screenshots
 
-### Public Match List
+### Public match list
 
 ![Public match list](docs/screenshots/matches.png)
 
-### Admin Dashboard
+### Admin dashboard
 
 ![Admin dashboard](docs/screenshots/admin.png)
 
-### Match Detail
+### Match detail with live timeline
 
-![Match detail page](docs/screenshots/match-detail.png)
+![Match detail with live timeline](docs/screenshots/match-detail.png)
 
-### Embeddable Widget
+### Embeddable widget
 
-![Embeddable live score widget](docs/screenshots/widget.png)
+![Embeddable widget](docs/screenshots/widget.png)
+
+### Screenshot capture notes
+
+Capture screenshots from seeded data in a clean browser window. Avoid screenshots from a broken request state, an open developer overlay, or a browser window showing the Next.js development indicator.
+
+For clean screenshots, run the API and MongoDB, seed the database, then capture the web app from a production Next.js build:
+
+```bash
+docker compose up -d mongodb api
+docker compose exec api npm run seed
+npm --prefix apps/web run build
+npm --prefix apps/web run start
+```
+
+Then open `http://localhost:3000` and capture the match list, admin dashboard, match detail page, and widget page.
 
 ## Roadmap
 
 - Admin authentication and protected write routes
-- Seed data command for demo environments
-- Event editing and deletion
-- Search and filtering for match history
-- League, season, and venue fields
+- Event editing and deletion for operator corrections
+- Match search and status filtering
+- League, season, and venue metadata
 - Automated match clock support
-- E2E tests for admin and public real-time flows
-- Basic observability around API errors and Socket.IO connections
+- E2E coverage for the admin-to-public real-time flow
+- Basic observability for API errors and Socket.IO connections
 
 ## Production Considerations
 
@@ -211,16 +248,16 @@ This project is a realistic demo, not a production deployment. Before using this
 - Secrets management instead of plain local `.env` files
 - Separate deployment strategy for web, API, database, and persistent storage
 
-## Interview Talking Points
+## Technical Discussion Points
 
-- Why match-specific Socket.IO rooms are used instead of broadcasting every event to every client
-- How REST and WebSocket responsibilities are separated
-- Why scoring rules live in a service instead of inside route handlers
-- How the admin flow handles validation and API errors
-- How Docker networking changes API URLs for server-side rendering
-- What would be required to make admin routes safe for real production use
-- How Socket.IO would scale horizontally with Redis
-- Where additional test coverage would provide the most value
+- Match-specific Socket.IO rooms keep public match pages and widgets subscribed only to events they need instead of broadcasting every incident globally.
+- REST endpoints are responsible for durable state changes and initial reads; WebSocket events notify connected clients after those changes are accepted.
+- Scoring rules live in the service layer so route handlers stay focused on HTTP concerns and tests can target domain behavior directly.
+- Admin forms show client-side validation first, then surface normalized API errors from Zod validation and service-level lifecycle checks.
+- Docker networking requires separate API URLs because server-side web requests use the Compose service name (`api`) while browser requests use `localhost`.
+- Production admin routes would need authentication, authorization, audit logging, CSRF/session strategy or token handling, and stricter operational permissions.
+- Socket.IO can scale horizontally with the Redis adapter so room membership and events are shared across API instances.
+- Additional tests would add the most value around admin workflows, Socket.IO update delivery, event ordering, and end-to-end score updates.
 
 ## License
 

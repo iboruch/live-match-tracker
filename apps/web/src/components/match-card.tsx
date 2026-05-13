@@ -7,7 +7,7 @@ export function MatchCard({ match }: { match: Match }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="block rounded border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-500 hover:shadow-md"
+      className="block rounded border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
     >
       <div className="flex items-center justify-between gap-3">
         <StatusBadge status={match.status} />
@@ -23,6 +23,7 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="min-w-0 truncate font-semibold text-slate-900">{match.awayTeam}</div>
       </div>
+      <div className="mt-4 text-xs font-medium text-slate-400">Open live timeline</div>
     </Link>
   );
 }

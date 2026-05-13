@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AlertCircle, Flag, Plus, Square, TimerReset } from "lucide-react";
+import { AlertCircle, CheckCircle2, Flag, Plus, Square, TimerReset } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { api } from "@/lib/api";
@@ -14,6 +14,7 @@ export function AdminClient({ initialMatches }: { initialMatches: Match[] }) {
   const [matches, setMatches] = useState(initialMatches);
   const [selectedId, setSelectedId] = useState(initialMatches[0]?.id ?? "");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const selected = matches.find((match) => match.id === selectedId);
 
@@ -27,6 +28,7 @@ export function AdminClient({ initialMatches }: { initialMatches: Match[] }) {
     event.preventDefault();
     const form = event.currentTarget;
     setError("");
+    setNotice("");
     const data = new FormData(form);
     const homeTeam = String(data.get("homeTeam") ?? "").trim();
     const awayTeam = String(data.get("awayTeam") ?? "").trim();
@@ -40,6 +42,7 @@ export function AdminClient({ initialMatches }: { initialMatches: Match[] }) {
       const match = await api.createMatch({ homeTeam, awayTeam });
       setMatches((current) => [match, ...current.filter((item) => item.id !== match.id)]);
       setSelectedId(match.id);
+      setNotice(`Created ${match.homeTeam} vs ${match.awayTeam}.`);
       form.reset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create match.");
@@ -69,6 +72,7 @@ export function AdminClient({ initialMatches }: { initialMatches: Match[] }) {
             <input name="awayTeam" placeholder="Barcelona" className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
           </label>
           {error ? <InlineError message={error} /> : null}
+          {notice ? <InlineNotice message={notice} /> : null}
           <button
             disabled={isCreating}
             className="inline-flex w-full items-center justify-center gap-2 rounded bg-slate-950 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
@@ -106,7 +110,7 @@ export function AdminClient({ initialMatches }: { initialMatches: Match[] }) {
       </section>
 
       {selected ? (
-        <MatchControls match={selected} onChange={updateSelected} onRefresh={refresh} />
+        <MatchControls key={selected.id} match={selected} onChange={updateSelected} onRefresh={refresh} />
       ) : (
         <EmptyState title="Select a match" body="Create or choose a match to manage live state and events." />
       )}
@@ -125,12 +129,14 @@ function MatchControls({
 }) {
   const [eventError, setEventError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   async function addEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     setEventError("");
+    setNotice("");
     const data = new FormData(form);
     const minute = Number(data.get("minute"));
     const description = String(data.get("description") ?? "").trim();
@@ -156,6 +162,7 @@ function MatchControls({
         description
       });
       onChange(result.match);
+      setNotice(`${type.replace("_", " ")} added at ${minute}'.`);
       form.reset();
       await onRefresh();
     } catch (err) {
@@ -165,11 +172,14 @@ function MatchControls({
     }
   }
 
-  async function runAction(action: () => Promise<Match>) {
+  async function runAction(action: () => Promise<Match>, successMessage: (match: Match) => string) {
     try {
       setActionError("");
+      setNotice("");
       setIsSaving(true);
-      onChange(await action());
+      const nextMatch = await action();
+      onChange(nextMatch);
+      setNotice(successMessage(nextMatch));
       await onRefresh();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Action failed.");
@@ -191,7 +201,7 @@ function MatchControls({
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => runAction(() => api.startMatch(match.id))}
+            onClick={() => runAction(() => api.startMatch(match.id), () => "Match marked as live.")}
             disabled={match.status === "finished" || isSaving}
             className="inline-flex items-center gap-2 rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -199,7 +209,7 @@ function MatchControls({
             Start
           </button>
           <button
-            onClick={() => runAction(() => api.finishMatch(match.id))}
+            onClick={() => runAction(() => api.finishMatch(match.id), () => "Match finished.")}
             disabled={match.status !== "live" || isSaving}
             className="inline-flex items-center gap-2 rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -209,23 +219,23 @@ function MatchControls({
         </div>
       </div>
       {actionError ? <div className="mt-4"><InlineError message={actionError} /></div> : null}
+      {notice ? <div className="mt-4"><InlineNotice message={notice} /></div> : null}
 
       <form
         onSubmit={async (event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
-          await runAction(() => api.updateMatch(match.id, { minute: Number(data.get("minute")) }));
+          await runAction(
+            () => api.updateMatch(match.id, { minute: Number(data.get("minute")) }),
+            (nextMatch) => `Minute updated to ${nextMatch.minute}'.`
+          );
         }}
         className="mt-6 flex max-w-xs gap-2"
       >
-        <input
-          name="minute"
-          type="number"
-          min="0"
-          max="130"
-          defaultValue={match.minute}
-          className="w-full rounded border border-slate-300 px-3 py-2"
-        />
+        <label className="sr-only" htmlFor="match-minute">
+          Match minute
+        </label>
+        <input id="match-minute" name="minute" type="number" min="0" max="130" defaultValue={match.minute} className="w-full rounded border border-slate-300 px-3 py-2" />
         <button className="inline-flex items-center gap-2 rounded bg-slate-200 px-3 py-2 font-semibold text-slate-800 hover:bg-slate-300">
           <TimerReset size={16} />
           Update
@@ -293,6 +303,15 @@ function InlineError({ message }: { message: string }) {
   return (
     <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
       <AlertCircle className="mt-0.5 shrink-0" size={16} />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+function InlineNotice({ message }: { message: string }) {
+  return (
+    <div className="flex items-start gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+      <CheckCircle2 className="mt-0.5 shrink-0" size={16} />
       <span>{message}</span>
     </div>
   );

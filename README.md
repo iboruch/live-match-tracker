@@ -129,6 +129,7 @@ docker compose down
 | `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/live-match-tracker` |
 | `API_PORT` | Backend port | `4000` |
 | `CORS_ORIGIN` | Allowed frontend origin | `http://localhost:3000` |
+| `API_INTERNAL_URL` | Server-side API URL used by the web app | `http://localhost:4000` |
 | `NEXT_PUBLIC_API_URL` | Browser API base URL | `http://localhost:4000` |
 | `NEXT_PUBLIC_SOCKET_URL` | Browser Socket.IO URL | `http://localhost:4000` |
 

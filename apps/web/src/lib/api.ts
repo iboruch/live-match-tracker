@@ -1,9 +1,15 @@
 import { Match, MatchEvent } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+function getApiUrl() {
+  if (typeof window === "undefined") {
+    return process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  }
+
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${getApiUrl()}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
